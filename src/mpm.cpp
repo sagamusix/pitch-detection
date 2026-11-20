@@ -8,7 +8,11 @@
 
 #define MPM_CUTOFF 0.93
 #define MPM_SMALL_CUTOFF 0.5
+#if 0  // OpenMPT
 #define MPM_LOWER_PITCH_CUTOFF 80.0
+#else  // OpenMPT
+#define MPM_LOWER_PITCH_CUTOFF 40.0  // OpenMPT
+#endif  // OpenMPT
 #define PMPM_PA 0.01
 #define PMPM_N_CUTOFFS 20
 #define PMPM_PROB_DIST 0.05
@@ -22,7 +26,11 @@ peak_picking(const std::vector<T> &nsdf)
 	std::vector<int> max_positions{};
 	int pos = 0;
 	int cur_max_pos = 0;
+#if 0  // OpenMPT
 	ssize_t size = nsdf.size();
+#else  // OpenMPT
+	const std::ptrdiff_t size = nsdf.size();  // OpenMPT
+#endif  // OpenMPT
 
 	while (pos < (size - 1) / 3 && nsdf[pos] > 0)
 		pos++;
@@ -54,6 +62,7 @@ peak_picking(const std::vector<T> &nsdf)
 	return max_positions;
 }
 
+#if 0  // OpenMPT
 template <typename T>
 T
 pitch_alloc::Mpm<T>::probabilistic_pitch(
@@ -119,6 +128,7 @@ pitch_alloc::Mpm<T>::probabilistic_pitch(
 
 	return util::pitch_from_hmm(this->hmm, f0_with_probability);
 }
+#endif  // OpenMPT
 
 template <typename T>
 T
@@ -161,6 +171,7 @@ pitch_alloc::Mpm<T>::pitch(const std::vector<T> &audio_buffer, int sample_rate)
 	return (pitch_estimate > MPM_LOWER_PITCH_CUTOFF) ? pitch_estimate : -1;
 }
 
+#if 0  // OpenMPT
 template <typename T>
 T
 pitch::mpm(const std::vector<T> &audio_buffer, int sample_rate)
@@ -191,3 +202,7 @@ pitch::pmpm<double>(const std::vector<double> &audio_buffer, int sample_rate);
 
 template float
 pitch::pmpm<float>(const std::vector<float> &audio_buffer, int sample_rate);
+#else  // OpenMPT
+template double pitch_alloc::Mpm<double>::pitch(const std::vector<double> &audio_buffer, int sample_rate);  // OpenMPT
+double pitch::lower_pitch_cutoff() { return MPM_LOWER_PITCH_CUTOFF; }  // OpenMPT
+#endif  // OpenMPT

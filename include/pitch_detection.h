@@ -2,12 +2,15 @@
 #define PITCH_DETECTION_H
 
 #include <complex>
+#if 0  // OpenMPT
 #include <ffts/ffts.h>
 #include <mlpack/core.hpp>
 #include <mlpack/methods/hmm/hmm.hpp>
+#endif  // OpenMPT
 #include <stdexcept>
 #include <vector>
 
+#if 0  // OpenMPT
 /* ignore me plz */
 namespace detail
 {
@@ -21,6 +24,7 @@ build_hmm();
 void
 init_pitch_bins();
 } // namespace detail
+#endif  // OpenMPT
 
 /*
  * The pitch namespace contains the functions:
@@ -34,6 +38,7 @@ init_pitch_bins();
  */
 namespace pitch
 {
+#if 0  // OpenMPT
 
 template <typename T>
 T
@@ -53,6 +58,15 @@ pyin(const std::vector<T> &, int);
 template <typename T>
 T
 pmpm(const std::vector<T> &, int);
+#else  // OpenMPT
+struct FFTProvider  // OpenMPT
+{  // OpenMPT
+	virtual void FFT(std::vector<std::complex<double>> &A) const = 0;  // OpenMPT
+	virtual void IFFT(std::vector<std::complex<double>> &A) const = 0;  // OpenMPT
+	virtual void Normalize(std::vector<std::complex<double>> &data) const = 0;  // OpenMPT
+};  // OpenMPT
+double lower_pitch_cutoff();  // OpenMPT
+#endif  // OpenMPT
 } // namespace pitch
 
 /*
@@ -66,6 +80,7 @@ pmpm(const std::vector<T> &, int);
 namespace pitch_alloc
 {
 
+#if 0  // OpenMPT
 enum FFTType { REAL_TO_COMPLEX, COMPLEX_TO_COMPLEX };
 
 class BaseAlloc
@@ -127,6 +142,23 @@ class BaseAlloc
 		return x && !(x & (x - 1));
 	}
 };
+#else  // OpenMPT
+class BaseAlloc  // OpenMPT: Simplified replacement for the original BaseAlloc using our own FFT
+{  // OpenMPT
+  public:  // OpenMPT
+	const long nfft;  // OpenMPT
+	std::vector<float> out_real;  // OpenMPT
+	std::vector<std::complex<double>> out_im;  // OpenMPT
+	const pitch::FFTProvider &fft_provider;  // OpenMPT
+
+	BaseAlloc(long audio_buffer_size, const pitch::FFTProvider &fft)  // OpenMPT
+		: nfft{audio_buffer_size}, out_real(nfft), out_im(nfft * 2), fft_provider{fft}  // OpenMPT
+	{ }  // OpenMPT
+
+  protected:  // OpenMPT
+	void clear() { }  // OpenMPT
+};  // OpenMPT
+#endif  // OpenMPT
 
 /*
  * Allocate the buffers for MPM for re-use.
@@ -137,7 +169,11 @@ class BaseAlloc
 template <typename T> class Mpm : public BaseAlloc
 {
   public:
+#if 0  // OpenMPT
 	Mpm(long audio_buffer_size) : BaseAlloc(audio_buffer_size){};
+#else  // OpenMPT
+	Mpm(long audio_buffer_size, const pitch::FFTProvider &fft) : BaseAlloc{audio_buffer_size, fft}{};  // OpenMPT
+#endif  // OpenMPT
 
 	T
 	pitch(const std::vector<T> &, int);
@@ -146,6 +182,7 @@ template <typename T> class Mpm : public BaseAlloc
 	probabilistic_pitch(const std::vector<T> &, int);
 };
 
+#if 0  // OpenMPT
 /*
  * Allocate the buffers for YIN for re-use.
  * Intended for multiple consistently-sized audio buffers.
@@ -170,6 +207,7 @@ template <typename T> class Yin : public BaseAlloc
 	T
 	probabilistic_pitch(const std::vector<T> &, int);
 };
+#endif  // OpenMPT
 } // namespace pitch_alloc
 
 namespace util
@@ -182,10 +220,12 @@ template <typename T>
 void
 acorr_r(const std::vector<T> &, pitch_alloc::BaseAlloc *);
 
+#if 0  // OpenMPT
 template <typename T>
 T
 pitch_from_hmm(mlpack::hmm::HMM<mlpack::distribution::DiscreteDistribution>,
     const std::vector<std::pair<T, T>>);
+#endif  // OpenMPT
 } // namespace util
 
 #endif /* PITCH_DETECTION_H */
